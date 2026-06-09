@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Muster</title>
+  <link rel="stylesheet" href="index_files/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Chess Muster</h1>
+  <span>Buy · Place · Play</span>
+</header>
+
+<!-- ─── BUY SCREEN ─────────────────────────────────────────── -->
+<div id="buyScreen" class="screen">
+  <div class="screen-title">Build your army</div>
+
+  <div class="buy-header">
+    <div class="buy-stat">
+      <div class="buy-stat-label">Coins</div>
+      <div class="buy-stat-value" id="coinCount">50</div>
+    </div>
+    <div class="buy-stat">
+      <div class="buy-stat-label">Pieces</div>
+      <div class="buy-stat-value" id="pieceCount">1 / 16</div>
+    </div>
+  </div>
+
+  <div class="king-row">
+    <div id="kingDisplay"></div>
+    <span>King — always included, free</span>
+  </div>
+
+  <div id="shopItems" class="shop-grid"></div>
+
+  <div class="purchase-section">
+    <div class="purchase-label">Your army (click piece to remove)</div>
+    <div id="purchaseList" class="purchase-list"></div>
+  </div>
+
+  <button class="btn" id="buyDoneBtn" onclick="finishBuy()">
+    Done — Place Pieces →
+  </button>
+</div>
+
+<!-- ─── PLACE SCREEN ───────────────────────────────────────── -->
+<div id="placeScreen" class="screen">
+  <div class="screen-title">Place your pieces</div>
+
+  <div class="place-info">
+    <div id="nextPieceDisplay"></div>
+    <div>
+      <div id="nextPieceLabel"></div>
+      <div id="placeStatus">Loading...</div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board-coords-side">
+      <span class="coord-side">8</span>
+      <span class="coord-side">7</span>
+      <span class="coord-side">6</span>
+      <span class="coord-side">5</span>
+      <span class="coord-side">4</span>
+      <span class="coord-side">3</span>
+      <span class="coord-side">2</span>
+      <span class="coord-side">1</span>
+    </div>
+    <div id="placeBoard" class="board"></div>
+    <div class="board-coords">
+      <span class="coord">a</span><span class="coord">b</span>
+      <span class="coord">c</span><span class="coord">d</span>
+      <span class="coord">e</span><span class="coord">f</span>
+      <span class="coord">g</span><span class="coord">h</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PLAY SCREEN ────────────────────────────────────────── -->
+<div id="playScreen" class="screen">
+
+  <div class="play-info">
+    <div id="playStatus">Loading...</div>
+    <div class="material-count">
+      <span id="capturedWhite"></span>
+      <span id="capturedBlack"></span>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board-coords-side">
+      <span class="coord-side">8</span>
+      <span class="coord-side">7</span>
+      <span class="coord-side">6</span>
+      <span class="coord-side">5</span>
+      <span class="coord-side">4</span>
+      <span class="coord-side">3</span>
+      <span class="coord-side">2</span>
+      <span class="coord-side">1</span>
+    </div>
+    <div id="playBoard" class="board"></div>
+    <div class="board-coords">
+      <span class="coord">a</span><span class="coord">b</span>
+      <span class="coord">c</span><span class="coord">d</span>
+      <span class="coord">e</span><span class="coord">f</span>
+      <span class="coord">g</span><span class="coord">h</span>
+    </div>
+  </div>
+
+  <button class="btn btn-ghost" onclick="newGame()">New Game</button>
+</div>
+
+<!-- ─── Promotion picker (overlay) ───────────────────────────── -->
+<div id="promotionPicker"></div>
+
+<!-- ─── Scripts ──────────────────────────────────────────────── -->
+<script src="index_files/utils.js"></script>
+<script src="index_files/chess.js"></script>
+<script src="index_files/ai.js"></script>
+<script src="index_files/game.js"></script>
+<script>
+  // Polyfill Array.prototype.find for older browsers
+  if (!Array.prototype.find) {
+    Array.prototype.find = function(fn) {
+      for (var i = 0; i < this.length; i++)
+        if (fn(this[i], i, this)) return this[i];
+    };
+  }
+  init();
+</script>
+
+
+</body></html>
