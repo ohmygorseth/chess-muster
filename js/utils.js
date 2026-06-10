@@ -15,7 +15,7 @@ function pieceSVG(p) {
   if (!p) return "";
   var prefix = p.color === "white" ? "w" : "b";
   var url = PIECE_BASE + prefix + p.type + ".svg";
-  return '<img src="' + url + '" style="width:min(52px,11vw);height:min(52px,11vw);display:block;" draggable="false"/>';
+  return '<img src="' + url + '" draggable="false"/>';
 }
 
 // Create a piece object
