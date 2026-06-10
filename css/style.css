@@ -20,7 +20,7 @@
   --check:     rgba(220, 40, 40, 0.75);
   --valid-place: rgba(80, 200, 120, 0.35);
   --radius:    8px;
-  --board-size: min(640px, 92vw);
+  --board-size: min(calc(100vh - 80px), calc(100vw - 48px));
 }
 
 /* ─── Reset & base ──────────────────────────────────────────── */
@@ -31,19 +31,22 @@ body {
   color: var(--text);
   font-family: 'DM Mono', monospace;
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
 }
 
 /* ─── Header ────────────────────────────────────────────────── */
 header {
   width: 100%;
-  padding: 1.4rem 2.5rem;
+  padding: 0.8rem 2rem;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: baseline;
   gap: 1.2rem;
+  flex-shrink: 0;
 }
 
 header h1 {
@@ -68,8 +71,17 @@ header span {
   align-items: center;
   width: 100%;
   max-width: 820px;
-  padding: 2.5rem 1.5rem 4rem;
-  gap: 1.8rem;
+  padding: 1.5rem 1.5rem 1.5rem;
+  gap: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+#playScreen, #placeScreen {
+  max-width: 100%;
+  padding: 0.8rem 2rem;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .screen-title {
@@ -487,11 +499,11 @@ header span {
   justify-content: space-between;
   align-items: center;
   width: var(--board-size);
-  padding: 0.5rem 0;
+  padding: 0.4rem 0;
 }
 
 #playStatus {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--accent2);
   letter-spacing: 0.06em;
 }
