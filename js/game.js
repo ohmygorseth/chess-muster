@@ -94,6 +94,7 @@ var G = {
   aiPieces: [],
   placingColor: null,
   placingIndex: 0,
+  selectedPieceIndex: null, // index into playerPieces the player has selected
   selectedPlaceType: null,
 
   // Play phase
@@ -283,6 +284,8 @@ function finishBuy() {
   G.playerPieces = ["K"].concat(G.playerPurchases);
   G.aiPieces = ["K"].concat(aiPurchased);
   G.board = initEmptyBoard();
+  G.placedPieceIndices = [];
+  G.selectedPieceIndex = null;
 
   // White always places first
   G.placingColor = "white";
@@ -305,24 +308,49 @@ function placedCountForColor(color) {
 
 function renderPlaceUI() {
   var isPlayer = G.placingColor === G.playerColor;
-  var pieces = G.placingColor === G.playerColor ? G.playerPieces : G.aiPieces;
   var placed = placedCountForColor(G.placingColor);
+  var pieces = isPlayer ? G.playerPieces : G.aiPieces;
   var remaining = pieces.length - placed;
-
   var colorLabel = G.placingColor.charAt(0).toUpperCase() + G.placingColor.slice(1);
 
   document.getElementById("placeStatus").textContent =
     isPlayer
-      ? "Your turn to place — " + remaining + " remaining"
+      ? "Your turn — select a piece, then click a square"
       : colorLabel + " (AI) is placing...";
 
+  // Show player's unplaced pieces as selectable icons
   var nextEl = document.getElementById("nextPieceDisplay");
   nextEl.innerHTML = "";
-  if (isPlayer && placed < pieces.length) {
-    nextEl.innerHTML = pieceSVG(mkP(pieces[placed], G.placingColor));
-    document.getElementById("nextPieceLabel").textContent = "Placing: " + pieces[placed];
-  } else {
-    document.getElementById("nextPieceLabel").textContent = "";
+  document.getElementById("nextPieceLabel").textContent = "";
+
+  if (isPlayer) {
+    // Build list of unplaced pieces with their original indices
+    var unplaced = [];
+    var placedSoFar = {};
+    G.playerPieces.forEach(function(type, i) {
+      var key = type + "_" + i;
+      if (!G.placedPieceIndices || G.placedPieceIndices.indexOf(i) === -1) {
+        unplaced.push({ type: type, index: i });
+      }
+    });
+
+    unplaced.forEach(function(item) {
+      var wrap = document.createElement("div");
+      wrap.className = "place-piece-option" + (G.selectedPieceIndex === item.index ? " selected-piece" : "");
+      wrap.innerHTML = pieceSVG(mkP(item.type, G.playerColor));
+      wrap.addEventListener("click", function() {
+        G.selectedPieceIndex = item.index;
+        renderPlaceUI();
+      });
+      nextEl.appendChild(wrap);
+    });
+
+    if (G.selectedPieceIndex !== null) {
+      var selType = G.playerPieces[G.selectedPieceIndex];
+      document.getElementById("nextPieceLabel").textContent = "Click a green square to place";
+    } else {
+      document.getElementById("nextPieceLabel").textContent = "Select a piece above";
+    }
   }
 
   renderPlaceBoard(isPlayer);
@@ -336,9 +364,8 @@ function renderPlaceBoard(interactive) {
   var el = document.getElementById("placeBoard");
   el.innerHTML = "";
 
-  var pieces = G.placingColor === G.playerColor ? G.playerPieces : G.aiPieces;
-  var placed = placedCountForColor(G.placingColor);
   var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
+  var hasSelection = interactive && G.selectedPieceIndex !== null;
 
   var rows = boardRows();
   var cols = boardCols();
@@ -351,7 +378,7 @@ function renderPlaceBoard(interactive) {
       var p = G.board[r][c];
       if (p) sq.innerHTML = pieceSVG(p);
 
-      var isValid = interactive && placed < pieces.length && validRows.indexOf(r) !== -1 && !G.board[r][c];
+      var isValid = hasSelection && validRows.indexOf(r) !== -1 && !G.board[r][c];
       if (isValid) {
         sq.classList.add("valid-place");
         (function(row, col) {
@@ -367,13 +394,16 @@ function renderPlaceBoard(interactive) {
 }
 
 function placePlayerPiece(row, col) {
-  var pieces = G.playerPieces;
-  var placed = placedCountForColor(G.playerColor);
-  if (placed >= pieces.length) return;
+  if (G.selectedPieceIndex === null) return;
 
-  var type = pieces[placed];
+  var type = G.playerPieces[G.selectedPieceIndex];
   G.board[row][col] = mkP(type, G.playerColor);
   playSound("place");
+
+  // Track placed indices
+  if (!G.placedPieceIndices) G.placedPieceIndices = [];
+  G.placedPieceIndices.push(G.selectedPieceIndex);
+  G.selectedPieceIndex = null;
 
   advancePlacingTurn();
 }
@@ -404,14 +434,6 @@ function doAIPlacementOne() {
 }
 
 function advancePlacingTurn() {
-  var whitePlaced = placedCountForColor("white");
-  var blackPlaced = placedCountForColor("black");
-  var whiteDone = whitePlaced >= G.playerPieces.length && G.playerColor === "white" ||
-                  whitePlaced >= G.aiPieces.length && G.aiColor === "white";
-  var blackDone = blackPlaced >= G.playerPieces.length && G.playerColor === "black" ||
-                  blackPlaced >= G.aiPieces.length && G.aiColor === "black";
-
-  // Count total placed vs total pieces
   var totalPlayerPlaced = placedCountForColor(G.playerColor);
   var totalAIPlaced = placedCountForColor(G.aiColor);
   var playerDone = totalPlayerPlaced >= G.playerPieces.length;
@@ -425,12 +447,11 @@ function advancePlacingTurn() {
   // Switch to other color, skip if that color is done
   var next = G.placingColor === "white" ? "black" : "white";
   var nextIsPlayer = next === G.playerColor;
-  var nextPieces = nextIsPlayer ? G.playerPieces : G.aiPieces;
   var nextPlaced = placedCountForColor(next);
+  var nextTotal = nextIsPlayer ? G.playerPieces.length : G.aiPieces.length;
 
-  if (nextPlaced >= nextPieces.length) {
-    // Other color is done, keep going with current color
-    // (don't switch)
+  if (nextPlaced >= nextTotal) {
+    // Other color done, stay with current
   } else {
     G.placingColor = next;
   }
@@ -669,6 +690,8 @@ function newGame() {
     aiPieces: [],
     placingColor: null,
     placingIndex: 0,
+    selectedPieceIndex: null,
+    placedPieceIndices: [],
     selectedPlaceType: null,
     board: null,
     turn: "white",
