@@ -387,6 +387,37 @@ header span {
   margin-top: -0.8rem;
 }
 
+/* ─── Place piece selector ──────────────────────────────────── */
+#nextPieceDisplay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.place-piece-option {
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 2px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.place-piece-option:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+.place-piece-option.selected-piece {
+  border-color: var(--selected);
+  background: rgba(246, 246, 105, 0.15);
+}
+
+.place-piece-option img {
+  width: 40px;
+  height: 40px;
+}
+
 /* ─── Place Screen ──────────────────────────────────────────── */
 .place-info {
   display: flex;
