@@ -246,6 +246,8 @@ function updateCoords() {
   var files = ["a","b","c","d","e","f","g","h"];
   fileEls.forEach(function(el, i) { if (cols[i] !== undefined) el.textContent = files[cols[i]]; });
 }
+
+function renderPlaceUI() {
   var pieces = currentPiecesToPlace();
   var placed = placedCountForColor(G.placingColor);
   var remaining = pieces.slice(placed);
