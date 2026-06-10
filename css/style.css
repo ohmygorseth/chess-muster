@@ -184,6 +184,10 @@ header span { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; t
 #placeScreen .board-wrap     { width: var(--board-size-full); }
 #placeScreen .board-coords   { width: var(--board-size-full); }
 #placeScreen .board-coords-side { height: var(--board-size-full); }
+#placeScreen .square {
+  width: calc(var(--board-size-full) / 8);
+  height: calc(var(--board-size-full) / 8);
+}
 
 .place-info {
   display: flex; align-items: center; gap: 1rem; width: 100%;
@@ -313,7 +317,10 @@ header span { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; t
 
 .square {
   display: flex; align-items: center; justify-content: center;
-  position: relative; width: 100%; overflow: hidden;
+  position: relative; overflow: hidden;
+  width: calc(var(--board-size) / 8);
+  height: calc(var(--board-size) / 8);
+  flex-shrink: 0;
 }
 
 .square img {
