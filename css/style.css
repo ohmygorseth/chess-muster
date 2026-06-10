@@ -237,7 +237,16 @@ header span {
 
 .shop-item.disabled { opacity: 0.35; }
 
-.shop-piece { display: flex; justify-content: center; }
+.shop-piece img,
+.purchase-list img,
+.king-row img,
+.place-info img,
+#promotionPicker img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  display: block;
+}
 
 .shop-name {
   font-size: 0.75rem;
@@ -380,6 +389,7 @@ header span {
 .board-wrap {
   position: relative;
   width: var(--board-size);
+  flex-shrink: 0;
 }
 
 .board {
@@ -391,6 +401,7 @@ header span {
   border-radius: 2px;
   overflow: hidden;
   box-shadow: 0 8px 48px rgba(0,0,0,0.7);
+  flex-shrink: 0;
 }
 
 .square {
@@ -399,7 +410,18 @@ header span {
   justify-content: center;
   cursor: default;
   position: relative;
-  transition: filter 0.1s;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.square img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
 .square.light { background: var(--light-sq); }
@@ -414,6 +436,7 @@ header span {
   height: 32%;
   background: var(--move-hint);
   border-radius: 50%;
+  pointer-events: none;
 }
 
 .square.capture-hint { outline: 3px solid rgba(180,30,30,0.7); outline-offset: -3px; }
@@ -425,7 +448,7 @@ header span {
   cursor: pointer;
 }
 
-.square.valid-place:hover { filter: brightness(1.15); cursor: pointer; }
+.square.valid-place:hover { filter: brightness(1.15); }
 
 /* Board coords */
 .board-coords {
