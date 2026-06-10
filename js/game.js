@@ -33,6 +33,10 @@ var G = {
 // ─── Init ──────────────────────────────────────────────────────────────────
 
 function init() {
+  showScreen("startScreen");
+}
+
+function startVsAI() {
   // Randomly assign colors
   G.playerColor = Math.random() < 0.5 ? "white" : "black";
   G.aiColor = G.playerColor === "white" ? "black" : "white";
@@ -44,7 +48,7 @@ function init() {
 // ─── Screen management ─────────────────────────────────────────────────────
 
 function showScreen(id) {
-  ["buyScreen", "placeScreen", "playScreen"].forEach(function(s) {
+  ["startScreen", "buyScreen", "placeScreen", "playScreen"].forEach(function(s) {
     document.getElementById(s).style.display = "none";
   });
   document.getElementById(id).style.display = "flex";
@@ -529,5 +533,5 @@ function newGame() {
     gameOver: false,
     aiThinking: false,
   };
-  init();
+  showScreen("startScreen");
 }
