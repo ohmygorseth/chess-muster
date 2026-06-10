@@ -1,34 +1,109 @@
-// game.js — phase logic, UI binding, game flow for Chess Draft
+// game.js — phase logic, UI binding, game flow for Chess Muster
+
+// ─── Audio ─────────────────────────────────────────────────────────────────
+
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    var ctx = getAudioCtx();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    var now = ctx.currentTime;
+
+    if (type === "place") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(420, now + 0.08);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
+
+    } else if (type === "move") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+
+    } else if (type === "capture") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.18);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+
+    } else if (type === "check") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(660, now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+
+    } else if (type === "checkmate") {
+      // Three descending tones
+      [0, 0.18, 0.36].forEach(function(offset, i) {
+        var o2 = ctx.createOscillator();
+        var g2 = ctx.createGain();
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.type = "sine";
+        o2.frequency.setValueAtTime([660, 520, 380][i], now + offset);
+        g2.gain.setValueAtTime(0.2, now + offset);
+        g2.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.25);
+        o2.start(now + offset); o2.stop(now + offset + 0.25);
+      });
+      return;
+
+    } else if (type === "tick") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.start(now); osc.stop(now + 0.05);
+    }
+  } catch(e) {}
+}
 
 // ─── State ─────────────────────────────────────────────────────────────────
 
 var G = {
-  phase: "buy",          // "buy" | "place" | "play"
-  playerColor: null,     // "white" | "black" — randomly assigned
+  phase: "buy",
+  playerColor: null,
   aiColor: null,
 
   // Buy phase
   playerCoins: 50,
-  playerPurchases: [],   // array of type strings (not including K)
+  playerPurchases: [],
   buySecondsLeft: 60,
   buyTimerInterval: null,
 
   // Place phase
-  playerPieces: [],      // all pieces to place including K, as type strings
+  playerPieces: [],
   aiPieces: [],
-  placingColor: null,    // whose turn it is to place
-  placingIndex: 0,       // index into current placer's pieces array
+  placingColor: null,
+  placingIndex: 0,
   selectedPlaceType: null,
 
   // Play phase
   board: null,
   turn: "white",
   enPassantTarget: null,
-  selectedSquare: null,  // {row, col} or null
+  selectedSquare: null,
   legalMovesCache: [],
-  promotionPending: null, // {move} waiting for promotion choice
+  promotionPending: null,
   gameOver: false,
-
   aiThinking: false,
 };
 
@@ -48,6 +123,51 @@ function startVsAI() {
   startBuyTimer();
 }
 
+// ─── Screen management ─────────────────────────────────────────────────────
+
+function showScreen(id) {
+  ["startScreen", "buyScreen", "placeScreen", "playScreen"].forEach(function(s) {
+    document.getElementById(s).style.display = "none";
+  });
+  document.getElementById(id).style.display = "flex";
+}
+
+// ─── Board orientation ─────────────────────────────────────────────────────
+
+function boardRows() {
+  var rows = [];
+  if (G.playerColor === "white") {
+    for (var r = 0; r < 8; r++) rows.push(r);
+  } else {
+    for (var r = 7; r >= 0; r--) rows.push(r);
+  }
+  return rows;
+}
+
+function boardCols() {
+  var cols = [];
+  if (G.playerColor === "white") {
+    for (var c = 0; c < 8; c++) cols.push(c);
+  } else {
+    for (var c = 7; c >= 0; c--) cols.push(c);
+  }
+  return cols;
+}
+
+function updateCoords() {
+  var sideEls = document.querySelectorAll(".coord-side");
+  var rows = boardRows();
+  var ranks = rows.map(function(r) { return 8 - r; });
+  sideEls.forEach(function(el, i) { if (ranks[i] !== undefined) el.textContent = ranks[i]; });
+
+  var fileEls = document.querySelectorAll(".coord");
+  var cols = boardCols();
+  var files = ["a","b","c","d","e","f","g","h"];
+  fileEls.forEach(function(el, i) { if (cols[i] !== undefined) el.textContent = files[cols[i]]; });
+}
+
+// ─── BUY PHASE ─────────────────────────────────────────────────────────────
+
 function startBuyTimer() {
   clearInterval(G.buyTimerInterval);
   updateBuyTimerDisplay();
@@ -55,7 +175,7 @@ function startBuyTimer() {
   G.buyTimerInterval = setInterval(function() {
     G.buySecondsLeft--;
     updateBuyTimerDisplay();
-
+    if (G.buySecondsLeft <= 10) playSound("tick");
     if (G.buySecondsLeft <= 0) {
       clearInterval(G.buyTimerInterval);
       autoBuyRemaining();
@@ -75,34 +195,20 @@ function updateBuyTimerDisplay() {
 }
 
 function autoBuyRemaining() {
-  // Fill remaining slots with pawns up to max 16 pieces
   var maxCanBuy = 15 - G.playerPurchases.length;
   var canAfford = Math.floor(G.playerCoins / PRICES["P"]);
   var toBuy = Math.min(maxCanBuy, canAfford);
-
   for (var i = 0; i < toBuy; i++) {
     G.playerPurchases.push("P");
     G.playerCoins -= PRICES["P"];
   }
-
   renderBuyUI();
   setTimeout(function() { finishBuy(); }, 800);
 }
 
-// ─── Screen management ─────────────────────────────────────────────────────
-
-function showScreen(id) {
-  ["startScreen", "buyScreen", "placeScreen", "playScreen"].forEach(function(s) {
-    document.getElementById(s).style.display = "none";
-  });
-  document.getElementById(id).style.display = "flex";
-}
-
-// ─── BUY PHASE ─────────────────────────────────────────────────────────────
-
 function renderBuyUI() {
   document.getElementById("coinCount").textContent = G.playerCoins;
-  document.getElementById("pieceCount").textContent = G.playerPurchases.length + 1; // +1 for king
+  document.getElementById("pieceCount").textContent = (G.playerPurchases.length + 1) + " / 16";
 
   var shopEl = document.getElementById("shopItems");
   shopEl.innerHTML = "";
@@ -133,12 +239,7 @@ function renderBuyUI() {
   });
 
   renderPurchaseList();
-
-  // Show king (always free)
   document.getElementById("kingDisplay").innerHTML = pieceSVG(mkP("K", G.playerColor));
-
-  var doneBtn = document.getElementById("buyDoneBtn");
-  doneBtn.disabled = false;
 }
 
 function buyPiece(type) {
@@ -153,7 +254,6 @@ function renderPurchaseList() {
   var el = document.getElementById("purchaseList");
   el.innerHTML = "";
 
-  // King always first
   var kingWrap = document.createElement("div");
   kingWrap.className = "purchased-piece";
   kingWrap.innerHTML = pieceSVG(mkP("K", G.playerColor));
@@ -178,15 +278,13 @@ function removePurchase(i) {
 
 function finishBuy() {
   clearInterval(G.buyTimerInterval);
-  // AI buys
-  var aiPurchased = aiBuy();
 
+  var aiPurchased = aiBuy();
   G.playerPieces = ["K"].concat(G.playerPurchases);
   G.aiPieces = ["K"].concat(aiPurchased);
-
   G.board = initEmptyBoard();
 
-  // Determine who places first (white always places first)
+  // White always places first
   G.placingColor = "white";
   G.placingIndex = 0;
 
@@ -195,14 +293,7 @@ function finishBuy() {
 }
 
 // ─── PLACE PHASE ───────────────────────────────────────────────────────────
-
-function currentPlacer() {
-  return G.placingColor === G.playerColor ? "player" : "ai";
-}
-
-function currentPiecesToPlace() {
-  return G.placingColor === G.playerColor ? G.playerPieces : G.aiPieces;
-}
+// Alternating: white places 1, black places 1, white places 1, ...
 
 function placedCountForColor(color) {
   var count = 0;
@@ -212,69 +303,32 @@ function placedCountForColor(color) {
   return count;
 }
 
-function boardRows() {
-  // White: row 7 at bottom (index 7 last), Black: row 0 at bottom (index 0 last)
-  var rows = [];
-  if (G.playerColor === "white") {
-    for (var r = 0; r < 8; r++) rows.push(r);
-  } else {
-    for (var r = 7; r >= 0; r--) rows.push(r);
-  }
-  return rows;
-}
-
-function boardCols() {
-  var cols = [];
-  if (G.playerColor === "white") {
-    for (var c = 0; c < 8; c++) cols.push(c);
-  } else {
-    for (var c = 7; c >= 0; c--) cols.push(c);
-  }
-  return cols;
-}
-
-function updateCoords() {
-  // Update rank labels (side)
-  var sideEls = document.querySelectorAll(".coord-side");
-  var rows = boardRows();
-  var ranks = rows.map(function(r) { return 8 - r; });
-  sideEls.forEach(function(el, i) { if (ranks[i] !== undefined) el.textContent = ranks[i]; });
-
-  // Update file labels (bottom)
-  var fileEls = document.querySelectorAll(".coord");
-  var cols = boardCols();
-  var files = ["a","b","c","d","e","f","g","h"];
-  fileEls.forEach(function(el, i) { if (cols[i] !== undefined) el.textContent = files[cols[i]]; });
-}
-
 function renderPlaceUI() {
-  var pieces = currentPiecesToPlace();
+  var isPlayer = G.placingColor === G.playerColor;
+  var pieces = G.placingColor === G.playerColor ? G.playerPieces : G.aiPieces;
   var placed = placedCountForColor(G.placingColor);
-  var remaining = pieces.slice(placed);
+  var remaining = pieces.length - placed;
 
-  var isPlayer = currentPlacer() === "player";
   var colorLabel = G.placingColor.charAt(0).toUpperCase() + G.placingColor.slice(1);
 
   document.getElementById("placeStatus").textContent =
     isPlayer
-      ? "Place your pieces — " + remaining.length + " remaining"
+      ? "Your turn to place — " + remaining + " remaining"
       : colorLabel + " (AI) is placing...";
 
-  // Next piece to place
   var nextEl = document.getElementById("nextPieceDisplay");
   nextEl.innerHTML = "";
-  if (isPlayer && remaining.length > 0) {
-    nextEl.innerHTML = pieceSVG(mkP(remaining[0], G.placingColor));
-    document.getElementById("nextPieceLabel").textContent = "Placing: " + remaining[0];
+  if (isPlayer && placed < pieces.length) {
+    nextEl.innerHTML = pieceSVG(mkP(pieces[placed], G.placingColor));
+    document.getElementById("nextPieceLabel").textContent = "Placing: " + pieces[placed];
   } else {
     document.getElementById("nextPieceLabel").textContent = "";
   }
 
   renderPlaceBoard(isPlayer);
 
-  // If it's AI's turn, trigger AI placement after short delay
   if (!isPlayer) {
-    setTimeout(function() { doAIPlacement(); }, 600);
+    setTimeout(function() { doAIPlacementOne(); }, 600);
   }
 }
 
@@ -282,7 +336,7 @@ function renderPlaceBoard(interactive) {
   var el = document.getElementById("placeBoard");
   el.innerHTML = "";
 
-  var pieces = currentPiecesToPlace();
+  var pieces = G.placingColor === G.playerColor ? G.playerPieces : G.aiPieces;
   var placed = placedCountForColor(G.placingColor);
   var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
 
@@ -319,22 +373,16 @@ function placePlayerPiece(row, col) {
 
   var type = pieces[placed];
   G.board[row][col] = mkP(type, G.playerColor);
+  playSound("place");
 
-  var newPlaced = placedCountForColor(G.playerColor);
-  if (newPlaced >= pieces.length) {
-    // Player done placing — switch to other color or finish
-    advancePlacingTurn();
-  } else {
-    renderPlaceUI();
-  }
+  advancePlacingTurn();
 }
 
-function doAIPlacement() {
+function doAIPlacementOne() {
   var pieces = G.aiPieces;
   var placed = placedCountForColor(G.aiColor);
   var rows = G.aiColor === "black" ? [0, 1] : [6, 7];
 
-  // Find empty valid squares
   var empty = [];
   rows.forEach(function(r) {
     for (var c = 0; c < 8; c++) {
@@ -347,30 +395,47 @@ function doAIPlacement() {
     return;
   }
 
-  // Place one piece at a time with delay for visual effect
   var type = pieces[placed];
   var sq = empty[Math.floor(Math.random() * empty.length)];
   G.board[sq.row][sq.col] = mkP(type, G.aiColor);
-  renderPlaceBoard(false);
+  playSound("place");
 
-  var newPlaced = placedCountForColor(G.aiColor);
-  if (newPlaced >= pieces.length) {
-    setTimeout(function() { advancePlacingTurn(); }, 400);
-  } else {
-    setTimeout(function() { doAIPlacement(); }, 400);
-  }
+  advancePlacingTurn();
 }
 
 function advancePlacingTurn() {
-  // White places, then black places, then game starts
-  if (G.placingColor === "white") {
-    G.placingColor = "black";
-    G.placingIndex = 0;
-    renderPlaceUI();
-  } else {
-    // Both done — start game
-    startPlay();
+  var whitePlaced = placedCountForColor("white");
+  var blackPlaced = placedCountForColor("black");
+  var whiteDone = whitePlaced >= G.playerPieces.length && G.playerColor === "white" ||
+                  whitePlaced >= G.aiPieces.length && G.aiColor === "white";
+  var blackDone = blackPlaced >= G.playerPieces.length && G.playerColor === "black" ||
+                  blackPlaced >= G.aiPieces.length && G.aiColor === "black";
+
+  // Count total placed vs total pieces
+  var totalPlayerPlaced = placedCountForColor(G.playerColor);
+  var totalAIPlaced = placedCountForColor(G.aiColor);
+  var playerDone = totalPlayerPlaced >= G.playerPieces.length;
+  var aiDone = totalAIPlaced >= G.aiPieces.length;
+
+  if (playerDone && aiDone) {
+    setTimeout(function() { startPlay(); }, 400);
+    return;
   }
+
+  // Switch to other color, skip if that color is done
+  var next = G.placingColor === "white" ? "black" : "white";
+  var nextIsPlayer = next === G.playerColor;
+  var nextPieces = nextIsPlayer ? G.playerPieces : G.aiPieces;
+  var nextPlaced = placedCountForColor(next);
+
+  if (nextPlaced >= nextPieces.length) {
+    // Other color is done, keep going with current color
+    // (don't switch)
+  } else {
+    G.placingColor = next;
+  }
+
+  renderPlaceUI();
 }
 
 // ─── PLAY PHASE ─────────────────────────────────────────────────────────────
@@ -385,7 +450,6 @@ function startPlay() {
   showScreen("playScreen");
   updatePlayUI();
 
-  // If AI is white, it moves first
   if (G.aiColor === "white") {
     setTimeout(doAIMove, 600);
   }
@@ -394,22 +458,24 @@ function startPlay() {
 function updatePlayUI() {
   var state = gameState(G.board, G.turn, G.enPassantTarget);
   var turnLabel = G.turn.charAt(0).toUpperCase() + G.turn.slice(1);
-
   var statusEl = document.getElementById("playStatus");
-  if (G.gameOver) {
-    // already set
-  } else if (state === "checkmate") {
-    var winner = G.turn === "white" ? "Black" : "White";
-    statusEl.textContent = "Checkmate! " + winner + " wins!";
-    G.gameOver = true;
-  } else if (state === "stalemate") {
-    statusEl.textContent = "Stalemate — draw!";
-    G.gameOver = true;
-  } else if (state === "check") {
-    statusEl.textContent = turnLabel + " is in check!";
-  } else {
-    var whose = G.turn === G.playerColor ? "Your" : "AI's";
-    statusEl.textContent = whose + " turn (" + turnLabel + ")";
+
+  if (!G.gameOver) {
+    if (state === "checkmate") {
+      var winner = G.turn === "white" ? "Black" : "White";
+      statusEl.textContent = "Checkmate! " + winner + " wins!";
+      G.gameOver = true;
+      playSound("checkmate");
+    } else if (state === "stalemate") {
+      statusEl.textContent = "Stalemate — draw!";
+      G.gameOver = true;
+    } else if (state === "check") {
+      statusEl.textContent = turnLabel + " is in check!";
+      playSound("check");
+    } else {
+      var whose = G.turn === G.playerColor ? "Your" : "AI's";
+      statusEl.textContent = whose + " turn (" + turnLabel + ")";
+    }
   }
 
   renderPlayBoard();
@@ -475,18 +541,13 @@ function handleSquareClick(row, col) {
 
   var p = G.board[row][col];
 
-  // If a square is already selected
   if (G.selectedSquare) {
-    // Try to move
     var move = G.legalMovesCache.find(function(m) {
       return m.to.row === row && m.to.col === col;
     });
 
     if (move) {
-      // Handle promotion
       if (move.promotion) {
-        // Pick best promotion automatically unless multiple choices
-        // Show promotion picker
         var promos = G.legalMovesCache.filter(function(m) {
           return m.to.row === row && m.to.col === col && m.promotion;
         });
@@ -497,20 +558,17 @@ function handleSquareClick(row, col) {
       return;
     }
 
-    // Clicked own piece — reselect
     if (p && p.color === G.playerColor) {
       selectSquare(row, col);
       return;
     }
 
-    // Deselect
     G.selectedSquare = null;
     G.legalMovesCache = [];
     renderPlayBoard();
     return;
   }
 
-  // Nothing selected — select own piece
   if (p && p.color === G.playerColor) {
     selectSquare(row, col);
   }
@@ -543,12 +601,15 @@ function showPromotionPicker(moves) {
 
 function executeMove(move) {
   var piece = G.board[move.from.row][move.from.col];
+  var isCapture = !!G.board[move.to.row][move.to.col] || move.enPassant;
+
   G.board = applyMove(G.board, move);
   G.enPassantTarget = move.doublePush ? getEnPassantTarget(move, piece) : null;
   G.selectedSquare = null;
   G.legalMovesCache = [];
   G.turn = G.turn === "white" ? "black" : "white";
 
+  playSound(isCapture ? "capture" : "move");
   updatePlayUI();
 
   if (!G.gameOver && G.turn === G.aiColor) {
@@ -566,8 +627,7 @@ function doAIMove() {
   }
 
   var piece = G.board[move.from.row][move.from.col];
-
-  // AI always promotes to queen
+  var isCapture = !!G.board[move.to.row][move.to.col] || move.enPassant;
   if (move.promotion) move.promoteTo = "Q";
 
   G.board = applyMove(G.board, move);
@@ -575,6 +635,7 @@ function doAIMove() {
   G.turn = G.turn === "white" ? "black" : "white";
   G.aiThinking = false;
 
+  playSound(isCapture ? "capture" : "move");
   updatePlayUI();
 }
 
@@ -586,12 +647,10 @@ function renderCaptured() {
     for (var c = 0; c < 8; c++)
       if (G.board[r][c]) allTypes[G.board[r][c].color].push(G.board[r][c].type);
 
-  // We track what the player bought to infer captures
-  // Simpler: just show all living pieces as material count
   var wEl = document.getElementById("capturedWhite");
   var bEl = document.getElementById("capturedBlack");
-  if (wEl) wEl.textContent = "White pieces: " + allTypes.white.length;
-  if (bEl) bEl.textContent = "Black pieces: " + allTypes.black.length;
+  if (wEl) wEl.textContent = "White: " + allTypes.white.length + " pieces";
+  if (bEl) bEl.textContent = "Black: " + allTypes.black.length + " pieces";
 }
 
 // ─── New game ──────────────────────────────────────────────────────────────
@@ -604,6 +663,8 @@ function newGame() {
     aiColor: null,
     playerCoins: 50,
     playerPurchases: [],
+    buySecondsLeft: 60,
+    buyTimerInterval: null,
     playerPieces: [],
     aiPieces: [],
     placingColor: null,
