@@ -212,7 +212,40 @@ function placedCountForColor(color) {
   return count;
 }
 
-function renderPlaceUI() {
+function boardRows() {
+  // White: row 7 at bottom (index 7 last), Black: row 0 at bottom (index 0 last)
+  var rows = [];
+  if (G.playerColor === "white") {
+    for (var r = 0; r < 8; r++) rows.push(r);
+  } else {
+    for (var r = 7; r >= 0; r--) rows.push(r);
+  }
+  return rows;
+}
+
+function boardCols() {
+  var cols = [];
+  if (G.playerColor === "white") {
+    for (var c = 0; c < 8; c++) cols.push(c);
+  } else {
+    for (var c = 7; c >= 0; c--) cols.push(c);
+  }
+  return cols;
+}
+
+function updateCoords() {
+  // Update rank labels (side)
+  var sideEls = document.querySelectorAll(".coord-side");
+  var rows = boardRows();
+  var ranks = rows.map(function(r) { return 8 - r; });
+  sideEls.forEach(function(el, i) { if (ranks[i] !== undefined) el.textContent = ranks[i]; });
+
+  // Update file labels (bottom)
+  var fileEls = document.querySelectorAll(".coord");
+  var cols = boardCols();
+  var files = ["a","b","c","d","e","f","g","h"];
+  fileEls.forEach(function(el, i) { if (cols[i] !== undefined) el.textContent = files[cols[i]]; });
+}
   var pieces = currentPiecesToPlace();
   var placed = placedCountForColor(G.placingColor);
   var remaining = pieces.slice(placed);
@@ -251,8 +284,11 @@ function renderPlaceBoard(interactive) {
   var placed = placedCountForColor(G.placingColor);
   var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
 
-  for (var r = 0; r < 8; r++) {
-    for (var c = 0; c < 8; c++) {
+  var rows = boardRows();
+  var cols = boardCols();
+
+  rows.forEach(function(r) {
+    cols.forEach(function(c) {
       var sq = document.createElement("div");
       sq.className = "square " + ((r + c) % 2 === 0 ? "light" : "dark");
 
@@ -268,8 +304,10 @@ function renderPlaceBoard(interactive) {
       }
 
       el.appendChild(sq);
-    }
-  }
+    });
+  });
+
+  updateCoords();
 }
 
 function placePlayerPiece(row, col) {
@@ -386,31 +424,30 @@ function renderPlayBoard() {
     });
   }
 
-  // Check highlight — find king in check
   var checkedKing = null;
   if (inCheck(G.board, G.turn, G.enPassantTarget)) {
     checkedKing = findKing(G.board, G.turn);
   }
 
-  for (var r = 0; r < 8; r++) {
-    for (var c = 0; c < 8; c++) {
+  var rows = boardRows();
+  var cols = boardCols();
+
+  rows.forEach(function(r) {
+    cols.forEach(function(c) {
       var sq = document.createElement("div");
       sq.className = "square " + ((r + c) % 2 === 0 ? "light" : "dark");
 
       var p = G.board[r][c];
       if (p) sq.innerHTML = pieceSVG(p);
 
-      // Selected square highlight
       if (G.selectedSquare && G.selectedSquare.row === r && G.selectedSquare.col === c) {
         sq.classList.add("selected");
       }
 
-      // Legal move highlight
       if (highlights.indexOf(r * 8 + c) !== -1) {
         sq.classList.add(p ? "capture-hint" : "move-hint");
       }
 
-      // Check highlight
       if (checkedKing && checkedKing.row === r && checkedKing.col === c) {
         sq.classList.add("in-check");
       }
@@ -422,10 +459,10 @@ function renderPlayBoard() {
       }
 
       el.appendChild(sq);
-    }
-  }
+    });
+  });
 
-  // Render captured pieces / material
+  updateCoords();
   renderCaptured();
 }
 
