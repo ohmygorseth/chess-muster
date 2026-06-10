@@ -23,8 +23,8 @@
   --header-h:  48px;
   --status-h:  52px;
   --board-size: min(
-    calc(100vh - var(--header-h) - var(--status-h) - 2rem),
-    calc(100vw - 80px)
+    calc(100vh - var(--header-h) - var(--status-h) - 5rem),
+    calc(100vw - 200px)
   );
 }
 
