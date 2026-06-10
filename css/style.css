@@ -20,7 +20,12 @@
   --check:     rgba(220, 40, 40, 0.75);
   --valid-place: rgba(80, 200, 120, 0.35);
   --radius:    8px;
-  --board-size: min(calc(100vh - 80px), calc(100vw - 48px));
+  --header-h:  48px;
+  --status-h:  52px;
+  --board-size: min(
+    calc(100vh - var(--header-h) - var(--status-h) - 2rem),
+    calc(100vw - 80px)
+  );
 }
 
 /* ─── Reset & base ──────────────────────────────────────────── */
@@ -41,10 +46,11 @@ body {
 /* ─── Header ────────────────────────────────────────────────── */
 header {
   width: 100%;
-  padding: 0.8rem 2rem;
+  height: var(--header-h);
+  padding: 0 2rem;
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 1.2rem;
   flex-shrink: 0;
 }
@@ -79,9 +85,17 @@ header span {
 
 #playScreen, #placeScreen {
   max-width: 100%;
-  padding: 0.8rem 2rem;
-  justify-content: center;
+  width: 100%;
+  padding: 0;
+  gap: 0;
+  justify-content: flex-start;
   overflow: hidden;
+}
+
+#playScreen .board-wrap,
+#placeScreen .board-wrap {
+  margin: auto;
+  padding: 0.5rem 0;
 }
 
 .screen-title {
@@ -379,10 +393,11 @@ header span {
   align-items: center;
   gap: 1.2rem;
   width: 100%;
+  height: var(--status-h);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.4rem;
+  flex-shrink: 0;
 }
 
 #nextPieceLabel {
@@ -498,8 +513,12 @@ header span {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: var(--board-size);
-  padding: 0.4rem 0;
+  width: 100%;
+  height: var(--status-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.4rem;
+  flex-shrink: 0;
 }
 
 #playStatus {
