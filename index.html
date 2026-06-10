@@ -13,6 +13,40 @@
   <span>Buy · Place · Play</span>
 </header>
 
+<!-- ─── START SCREEN ───────────────────────────────────────── -->
+<div id="startScreen" class="screen">
+
+  <div class="start-hero">
+    <h2>Chess Muster</h2>
+    <p>Buy · Place · Play</p>
+  </div>
+
+  <div class="start-phases">
+    <div class="phase-card">
+      <div class="phase-number">Phase 1</div>
+      <div class="phase-title">Buy</div>
+      <div class="phase-desc">Spend 50 coins to build your army. Choose any combination of pieces — no restrictions.</div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-number">Phase 2</div>
+      <div class="phase-title">Place</div>
+      <div class="phase-desc">Position your pieces on your side of the board, one at a time. Strategy starts here.</div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-number">Phase 3</div>
+      <div class="phase-title">Play</div>
+      <div class="phase-desc">Standard chess from your custom position. May the best army win.</div>
+    </div>
+  </div>
+
+  <div class="start-buttons">
+    <button class="btn" onclick="startVsAI()">Play vs AI</button>
+    <button class="btn btn-disabled" disabled>Invite a Friend</button>
+    <div class="btn-soon">Multiplayer — coming soon</div>
+  </div>
+
+</div>
+
 <!-- ─── BUY SCREEN ─────────────────────────────────────────── -->
 <div id="buyScreen" class="screen">
   <div class="screen-title">Build your army</div>
@@ -109,7 +143,7 @@
     </div>
   </div>
 
-  <button class="btn btn-ghost" onclick="newGame()">New Game</button>
+  <button class="btn btn-ghost" onclick="newGame()">← Back to Menu</button>
 </div>
 
 <!-- ─── Promotion picker (overlay) ───────────────────────────── -->
@@ -121,7 +155,6 @@
 <script src="js/ai.js"></script>
 <script src="js/game.js"></script>
 <script>
-  // Polyfill Array.prototype.find for older browsers
   if (!Array.prototype.find) {
     Array.prototype.find = function(fn) {
       for (var i = 0; i < this.length; i++)
