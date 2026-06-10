@@ -10,6 +10,8 @@ var G = {
   // Buy phase
   playerCoins: 50,
   playerPurchases: [],   // array of type strings (not including K)
+  buySecondsLeft: 60,
+  buyTimerInterval: null,
 
   // Place phase
   playerPieces: [],      // all pieces to place including K, as type strings
@@ -37,12 +39,54 @@ function init() {
 }
 
 function startVsAI() {
-  // Randomly assign colors
   G.playerColor = Math.random() < 0.5 ? "white" : "black";
   G.aiColor = G.playerColor === "white" ? "black" : "white";
+  G.buySecondsLeft = 60;
 
   showScreen("buyScreen");
   renderBuyUI();
+  startBuyTimer();
+}
+
+function startBuyTimer() {
+  clearInterval(G.buyTimerInterval);
+  updateBuyTimerDisplay();
+
+  G.buyTimerInterval = setInterval(function() {
+    G.buySecondsLeft--;
+    updateBuyTimerDisplay();
+
+    if (G.buySecondsLeft <= 0) {
+      clearInterval(G.buyTimerInterval);
+      autoBuyRemaining();
+    }
+  }, 1000);
+}
+
+function updateBuyTimerDisplay() {
+  var el = document.getElementById("buyTimer");
+  if (!el) return;
+  el.textContent = G.buySecondsLeft;
+  if (G.buySecondsLeft <= 10) {
+    el.classList.add("urgent");
+  } else {
+    el.classList.remove("urgent");
+  }
+}
+
+function autoBuyRemaining() {
+  // Fill remaining slots with pawns up to max 16 pieces
+  var maxCanBuy = 15 - G.playerPurchases.length;
+  var canAfford = Math.floor(G.playerCoins / PRICES["P"]);
+  var toBuy = Math.min(maxCanBuy, canAfford);
+
+  for (var i = 0; i < toBuy; i++) {
+    G.playerPurchases.push("P");
+    G.playerCoins -= PRICES["P"];
+  }
+
+  renderBuyUI();
+  setTimeout(function() { finishBuy(); }, 800);
 }
 
 // ─── Screen management ─────────────────────────────────────────────────────
@@ -133,6 +177,7 @@ function removePurchase(i) {
 }
 
 function finishBuy() {
+  clearInterval(G.buyTimerInterval);
   // AI buys
   var aiPurchased = aiBuy();
 
@@ -513,6 +558,7 @@ function renderCaptured() {
 // ─── New game ──────────────────────────────────────────────────────────────
 
 function newGame() {
+  clearInterval(G.buyTimerInterval);
   G = {
     phase: "buy",
     playerColor: null,
