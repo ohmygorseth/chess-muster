@@ -15,12 +15,10 @@
 
 <!-- ─── START SCREEN ───────────────────────────────────────── -->
 <div id="startScreen" class="screen">
-
   <div class="start-hero">
     <h2>Chess Muster</h2>
     <p>Buy · Place · Play</p>
   </div>
-
   <div class="start-phases">
     <div class="phase-card">
       <div class="phase-number">Phase 1</div>
@@ -38,19 +36,16 @@
       <div class="phase-desc">Standard chess from your custom position. May the best army win.</div>
     </div>
   </div>
-
   <div class="start-buttons">
     <button class="btn" onclick="startVsAI()">Play vs AI</button>
     <button class="btn btn-disabled" disabled>Invite a Friend</button>
     <div class="btn-soon">Multiplayer — coming soon</div>
   </div>
-
 </div>
 
 <!-- ─── BUY SCREEN ─────────────────────────────────────────── -->
 <div id="buyScreen" class="screen">
   <div class="screen-title">Build your army</div>
-
   <div class="buy-header">
     <div class="buy-stat">
       <div class="buy-stat-label">Coins</div>
@@ -65,95 +60,96 @@
       <div class="buy-stat-value" id="buyTimer">60</div>
     </div>
   </div>
-
   <div class="king-row">
     <div id="kingDisplay"></div>
     <span>King — always included, free</span>
   </div>
-
   <div id="shopItems" class="shop-grid"></div>
-
   <div class="purchase-section">
     <div class="purchase-label">Your army (click piece to remove)</div>
     <div id="purchaseList" class="purchase-list"></div>
   </div>
-
-  <button class="btn" id="buyDoneBtn" onclick="finishBuy()">
-    Done — Place Pieces →
-  </button>
+  <button class="btn" id="buyDoneBtn" onclick="finishBuy()">Done — Place Pieces →</button>
 </div>
 
 <!-- ─── PLACE SCREEN ───────────────────────────────────────── -->
 <div id="placeScreen" class="screen">
   <div class="screen-title">Place your pieces</div>
-
   <div class="place-info">
     <div id="nextPieceDisplay"></div>
-    <div>
+    <div class="place-text">
       <div id="nextPieceLabel"></div>
       <div id="placeStatus">Loading...</div>
     </div>
   </div>
-
   <div class="board-wrap">
-    <div class="board-coords-side">
-      <span class="coord-side">8</span>
-      <span class="coord-side">7</span>
-      <span class="coord-side">6</span>
-      <span class="coord-side">5</span>
-      <span class="coord-side">4</span>
-      <span class="coord-side">3</span>
-      <span class="coord-side">2</span>
-      <span class="coord-side">1</span>
+    <div class="board-coords-side" id="placeCoordsSide">
+      <span class="coord-side">8</span><span class="coord-side">7</span>
+      <span class="coord-side">6</span><span class="coord-side">5</span>
+      <span class="coord-side">4</span><span class="coord-side">3</span>
+      <span class="coord-side">2</span><span class="coord-side">1</span>
     </div>
     <div id="placeBoard" class="board"></div>
-    <div class="board-coords">
-      <span class="coord">a</span><span class="coord">b</span>
-      <span class="coord">c</span><span class="coord">d</span>
-      <span class="coord">e</span><span class="coord">f</span>
-      <span class="coord">g</span><span class="coord">h</span>
+    <div class="board-coords" id="placeCoordsBottom">
+      <span class="coord">a</span><span class="coord">b</span><span class="coord">c</span><span class="coord">d</span>
+      <span class="coord">e</span><span class="coord">f</span><span class="coord">g</span><span class="coord">h</span>
     </div>
   </div>
 </div>
 
 <!-- ─── PLAY SCREEN ────────────────────────────────────────── -->
-<div id="playScreen" class="screen">
+<div id="playScreen" class="screen play-layout">
 
-  <div class="play-info">
-    <div id="playStatus">Loading...</div>
-    <div class="material-count">
-      <span id="capturedWhite"></span>
-      <span id="capturedBlack"></span>
+  <!-- Board side -->
+  <div class="play-board-col">
+    <div class="play-info">
+      <div id="playStatus">Loading...</div>
+      <div class="material-count">
+        <span id="capturedWhite"></span>
+        <span id="capturedBlack"></span>
+      </div>
+    </div>
+    <div class="board-wrap">
+      <div class="board-coords-side" id="playCoordsSide">
+        <span class="coord-side">8</span><span class="coord-side">7</span>
+        <span class="coord-side">6</span><span class="coord-side">5</span>
+        <span class="coord-side">4</span><span class="coord-side">3</span>
+        <span class="coord-side">2</span><span class="coord-side">1</span>
+      </div>
+      <div id="playBoard" class="board"></div>
+      <div class="board-coords" id="playCoordsBottom">
+        <span class="coord">a</span><span class="coord">b</span><span class="coord">c</span><span class="coord">d</span>
+        <span class="coord">e</span><span class="coord">f</span><span class="coord">g</span><span class="coord">h</span>
+      </div>
     </div>
   </div>
 
-  <div class="board-wrap">
-    <div class="board-coords-side">
-      <span class="coord-side">8</span>
-      <span class="coord-side">7</span>
-      <span class="coord-side">6</span>
-      <span class="coord-side">5</span>
-      <span class="coord-side">4</span>
-      <span class="coord-side">3</span>
-      <span class="coord-side">2</span>
-      <span class="coord-side">1</span>
+  <!-- Side panel -->
+  <div class="play-panel">
+    <div class="panel-section panel-moves">
+      <div class="panel-label">Moves</div>
+      <div id="moveList" class="move-list"></div>
     </div>
-    <div id="playBoard" class="board"></div>
-    <div class="board-coords">
-      <span class="coord">a</span><span class="coord">b</span>
-      <span class="coord">c</span><span class="coord">d</span>
-      <span class="coord">e</span><span class="coord">f</span>
-      <span class="coord">g</span><span class="coord">h</span>
+
+    <div class="panel-nav">
+      <button class="nav-btn" onclick="navFirst()" title="First move">⏮</button>
+      <button class="nav-btn" onclick="navPrev()" title="Previous move">◀</button>
+      <button class="nav-btn" onclick="navNext()" title="Next move">▶</button>
+      <button class="nav-btn" onclick="navLast()" title="Last move">⏭</button>
+    </div>
+
+    <div class="panel-actions">
+      <button class="action-btn resign-btn" onclick="resignGame()">🏳 Resign</button>
+      <button class="action-btn" onclick="newGame()">↩ Menu</button>
     </div>
   </div>
 
-  <button class="btn btn-ghost" onclick="newGame()">← Back to Menu</button>
 </div>
 
-<!-- ─── Promotion picker (overlay) ───────────────────────────── -->
+<!-- ─── Promotion picker ──────────────────────────────────── -->
 <div id="promotionPicker"></div>
 
-<!-- ─── Scripts ──────────────────────────────────────────────── -->
+<!-- ─── Scripts ──────────────────────────────────────────── -->
 <script src="js/utils.js"></script>
 <script src="js/chess.js"></script>
 <script src="js/ai.js"></script>
