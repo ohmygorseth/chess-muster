@@ -324,39 +324,52 @@ function renderPlaceUI() {
   var colorLabel = G.placingColor.charAt(0).toUpperCase() + G.placingColor.slice(1);
 
   document.getElementById("placeStatus").textContent = isPlayer
-    ? "Your turn — select a piece, then click a square"
+    ? "Your turn — drag a piece onto the board"
     : colorLabel + " (AI) is placing...";
+  document.getElementById("nextPieceLabel").textContent = isPlayer ? "Drag to place" : "";
 
-  var nextEl = document.getElementById("nextPieceDisplay");
-  nextEl.innerHTML = "";
-  document.getElementById("nextPieceLabel").textContent = "";
+  renderPiecePanelAI();
+  renderPlaceBoard(isPlayer);
 
-  if (isPlayer) {
-    G.playerPieces.forEach(function(type, i) {
-      if (G.placedPieceIndices.indexOf(i) !== -1) return;
-      var wrap = document.createElement("div");
-      wrap.className = "place-piece-option" + (G.selectedPieceIndex === i ? " selected-piece" : "");
-      wrap.innerHTML = pieceSVG(mkP(type, G.playerColor));
-      wrap.addEventListener("click", function() {
-        G.selectedPieceIndex = i;
-        renderPlaceUI();
-      });
-      nextEl.appendChild(wrap);
+  if (!isPlayer) setTimeout(function() { doAIPlacementOne(); }, 600);
+}
+
+function renderPiecePanelAI() {
+  // Only show player's pieces when it's player's turn
+  var panel = document.getElementById("placePiecePanel");
+  if (!panel) return;
+  panel.innerHTML = "";
+
+  if (G.placingColor !== G.playerColor) return;
+
+  G.playerPieces.forEach(function(type, i) {
+    if (G.placedPieceIndices.indexOf(i) !== -1) return;
+
+    var wrap = document.createElement("div");
+    wrap.className = "place-piece-option";
+    wrap.draggable = true;
+    wrap.dataset.pieceIndex = i;
+    wrap.innerHTML = pieceSVG(mkP(type, G.playerColor));
+
+    wrap.addEventListener("dragstart", function(e) {
+      G.selectedPieceIndex = i;
+      wrap.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", i);
     });
 
-    document.getElementById("nextPieceLabel").textContent =
-      G.selectedPieceIndex !== null ? "Click a green square to place" : "Select a piece above";
-  }
+    wrap.addEventListener("dragend", function() {
+      wrap.classList.remove("dragging");
+    });
 
-  renderPlaceBoard(isPlayer);
-  if (!isPlayer) setTimeout(function() { doAIPlacementOne(); }, 600);
+    panel.appendChild(wrap);
+  });
 }
 
 function renderPlaceBoard(interactive) {
   var el = document.getElementById("placeBoard");
   el.innerHTML = "";
-  var validRows = G.placingColor === "white" ? [6,7] : [0,1];
-  var hasSelection = interactive && G.selectedPieceIndex !== null;
+  var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
   var rows = boardRows();
   var cols = boardCols();
 
@@ -364,17 +377,37 @@ function renderPlaceBoard(interactive) {
     cols.forEach(function(c) {
       var sq = document.createElement("div");
       sq.className = "square " + ((r + c) % 2 === 0 ? "light" : "dark");
+
       var p = G.board[r][c];
       if (p) sq.innerHTML = pieceSVG(p);
-      if (hasSelection && validRows.indexOf(r) !== -1 && !p) {
-        sq.classList.add("valid-place");
-        (function(row, col) {
-          sq.addEventListener("click", function() { placePlayerPiece(row, col); });
-        })(r, c);
+
+      if (interactive) {
+        var isValid = validRows.indexOf(r) !== -1 && !p;
+
+        if (isValid) {
+          sq.addEventListener("dragover", function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            sq.classList.add("drop-target");
+          });
+
+          sq.addEventListener("dragleave", function() {
+            sq.classList.remove("drop-target");
+          });
+
+          sq.addEventListener("drop", function(e) {
+            e.preventDefault();
+            sq.classList.remove("drop-target");
+            if (G.selectedPieceIndex === null) return;
+            placePlayerPiece(r, c);
+          });
+        }
       }
+
       el.appendChild(sq);
     });
   });
+
   updateCoords();
 }
 
