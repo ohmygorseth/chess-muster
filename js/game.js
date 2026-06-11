@@ -422,6 +422,9 @@ function placePlayerPiece(row, col) {
 }
 
 function doAIPlacementOne() {
+  // Safety check — only run if it's AI's turn to place
+  if (G.placingColor !== G.aiColor) return;
+
   var pieces = G.aiPieces;
   var placed = placedCountForColor(G.aiColor);
   if (placed >= pieces.length) { advancePlacingTurn(); return; }
@@ -437,7 +440,8 @@ function doAIPlacementOne() {
   var sq = empty[Math.floor(Math.random() * empty.length)];
   G.board[sq.row][sq.col] = mkP(type, G.aiColor);
   playSound("place");
-  advancePlacingTurn();
+  renderPlaceBoard(false);
+  setTimeout(function() { advancePlacingTurn(); }, 500);
 }
 
 function advancePlacingTurn() {
