@@ -271,6 +271,50 @@ header span {
   max-width: 100%; width: 100%; padding: 0; gap: 0; overflow: hidden;
 }
 
+.place-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 1.5rem);
+  flex: 1;
+  overflow: hidden;
+  padding: clamp(0.3rem, 0.8vh, 1rem) clamp(0.5rem, 1vw, 1.5rem);
+}
+
+.place-piece-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  overflow-y: auto;
+  flex-shrink: 0;
+  width: calc(var(--board-size-full) / 8);
+  max-height: var(--board-size-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+}
+
+.place-piece-panel .place-piece-option {
+  width: calc(var(--board-size-full) / 8 - 12px);
+  height: calc(var(--board-size-full) / 8 - 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.place-piece-panel .place-piece-option img {
+  width: 85%;
+  height: 85%;
+}
+
+.place-piece-option.dragging { opacity: 0.3; }
+
 #placeScreen .board          { width: var(--board-size-full); height: var(--board-size-full); }
 #placeScreen .board-wrap     { width: var(--board-size-full); }
 #placeScreen .board-coords   { width: var(--board-size-full); }
@@ -279,6 +323,8 @@ header span {
   width: calc(var(--board-size-full) / 8);
   height: calc(var(--board-size-full) / 8);
 }
+
+#placeScreen .square.drop-target { outline: 3px solid var(--accent); outline-offset: -3px; }
 
 .place-info {
   display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 1.2rem);
