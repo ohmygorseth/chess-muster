@@ -283,13 +283,13 @@ header span {
 }
 
 .place-piece-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 2px;
-  align-items: center;
+  align-items: start;
   overflow-y: auto;
   flex-shrink: 0;
-  width: calc(var(--board-size-full) / 8);
+  width: calc(var(--board-size-full) / 4);
   max-height: var(--board-size-full);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -298,8 +298,8 @@ header span {
 }
 
 .place-piece-panel .place-piece-option {
-  width: calc(var(--board-size-full) / 8 - 12px);
-  height: calc(var(--board-size-full) / 8 - 12px);
+  width: calc(var(--board-size-full) / 8 - 6px);
+  height: calc(var(--board-size-full) / 8 - 6px);
   display: flex;
   align-items: center;
   justify-content: center;
