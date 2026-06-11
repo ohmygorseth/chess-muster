@@ -22,12 +22,12 @@
   --header-h:    clamp(36px, 4vh, 56px);
   --status-h:    clamp(36px, 4vh, 52px);
   --board-size: min(
-    calc(100vh - var(--header-h) - var(--status-h) - 2rem),
-    calc(100vw - var(--panel-w) - 4rem)
+    calc(100vh - var(--header-h) - var(--status-h) - 4rem),
+    calc(100vw - var(--panel-w) - 6rem)
   );
   --board-size-full: min(
-    calc(100vh - var(--header-h) - var(--status-h) - 2rem),
-    calc(100vw - 4rem)
+    calc(100vh - var(--header-h) - var(--status-h) - 4rem),
+    calc(100vw - 6rem)
   );
 }
 
