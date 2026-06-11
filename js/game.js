@@ -444,7 +444,7 @@ function advancePlacingTurn() {
   var playerDone = placedCountForColor(G.playerColor) >= G.playerPieces.length;
   var aiDone = placedCountForColor(G.aiColor) >= G.aiPieces.length;
 
-  if (playerDone && aiDone) { setTimeout(startPlay, 400); return; }
+  if (playerDone && aiDone) { setTimeout(startPlay, 600); return; }
 
   var next = G.placingColor === "white" ? "black" : "white";
   var nextIsPlayer = next === G.playerColor;
@@ -452,7 +452,9 @@ function advancePlacingTurn() {
   var nextPlaced = placedCountForColor(next);
 
   G.placingColor = nextPlaced >= nextTotal ? G.placingColor : next;
-  renderPlaceUI();
+
+  // Add delay before rendering so AI placement is visible
+  setTimeout(function() { renderPlaceUI(); }, 300);
 }
 
 // ─── PLAY PHASE ────────────────────────────────────────────────────────────
@@ -466,7 +468,6 @@ function startPlay() {
   G.history = [];
   G.historyIndex = -1;
 
-  // Save initial board state
   G.history.push({
     board: cloneBoard(G.board),
     enPassantTarget: null,
@@ -477,7 +478,12 @@ function startPlay() {
 
   showScreen("playScreen");
   updatePlayUI();
-  if (G.aiColor === "white") setTimeout(doAIMove, 600);
+
+  // Only AI moves first if AI is white (white always goes first in chess)
+  if (G.aiColor === "white") {
+    G.aiThinking = true;
+    setTimeout(doAIMove, 800);
+  }
 }
 
 function updatePlayUI() {
@@ -666,6 +672,12 @@ function executeMove(move) {
 }
 
 function doAIMove() {
+  // Safety check — only move if it's actually AI's turn
+  if (G.turn !== G.aiColor) {
+    G.aiThinking = false;
+    return;
+  }
+
   var move = aiBestMove(G.board, G.enPassantTarget);
   if (!move) { G.aiThinking = false; updatePlayUI(); return; }
 
