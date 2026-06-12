@@ -129,6 +129,8 @@ var G = {
   placingIndex: 0,
   selectedPieceIndex: null,
   placedPieceIndices: [],
+  placeSecondsLeft: 10,
+  placeTimerInterval: null,
 
   // Play phase
   board: null,
@@ -336,6 +338,68 @@ function placedCountForColor(color) {
   return n;
 }
 
+function startPlaceTimer() {
+  clearInterval(G.placeTimerInterval);
+  G.placeSecondsLeft = 10;
+  updatePlaceTimerDisplay();
+
+  G.placeTimerInterval = setInterval(function() {
+    G.placeSecondsLeft--;
+    updatePlaceTimerDisplay();
+    if (G.placeSecondsLeft <= 0) {
+      clearInterval(G.placeTimerInterval);
+      autoPlaceOne();
+    }
+  }, 1000);
+}
+
+function updatePlaceTimerDisplay() {
+  var el = document.getElementById("placeTimer");
+  if (!el) return;
+  el.textContent = G.placeSecondsLeft;
+  if (G.placeSecondsLeft <= 5) el.classList.add("urgent");
+  else el.classList.remove("urgent");
+}
+
+function autoPlaceOne() {
+  // Auto-place for whoever's turn it is
+  var isPlayer = G.placingColor === G.playerColor;
+  var pieces = isPlayer ? G.playerPieces : G.aiPieces;
+  var placed = placedCountForColor(G.placingColor);
+  if (placed >= pieces.length) { advancePlacingTurn(); return; }
+
+  var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
+  var empty = [];
+  validRows.forEach(function(r) {
+    for (var c = 0; c < 8; c++) if (!G.board[r][c]) empty.push({ row: r, col: c });
+  });
+  if (!empty.length) { advancePlacingTurn(); return; }
+
+  var sq = empty[Math.floor(Math.random() * empty.length)];
+  var type = isPlayer ? G.playerPieces[G.placedPieceIndices.length > 0
+    ? G.playerPieces.findIndex(function(_, i) { return G.placedPieceIndices.indexOf(i) === -1; })
+    : 0] : pieces[placed];
+
+  // Find first unplaced index for player
+  if (isPlayer) {
+    var firstUnplaced = -1;
+    for (var i = 0; i < G.playerPieces.length; i++) {
+      if (G.placedPieceIndices.indexOf(i) === -1) { firstUnplaced = i; break; }
+    }
+    if (firstUnplaced === -1) { advancePlacingTurn(); return; }
+    type = G.playerPieces[firstUnplaced];
+    G.board[sq.row][sq.col] = mkP(type, G.playerColor);
+    G.placedPieceIndices.push(firstUnplaced);
+    G.selectedPieceIndex = null;
+  } else {
+    type = pieces[placed];
+    G.board[sq.row][sq.col] = mkP(type, G.placingColor);
+  }
+
+  playSound("place");
+  advancePlacingTurn();
+}
+
 function renderPlaceUI() {
   var isPlayer = G.placingColor === G.playerColor;
   var colorLabel = G.placingColor.charAt(0).toUpperCase() + G.placingColor.slice(1);
@@ -345,6 +409,7 @@ function renderPlaceUI() {
     : colorLabel + " (AI) is placing...";
   document.getElementById("nextPieceLabel").textContent = isPlayer ? "Drag to place" : "";
 
+  startPlaceTimer();
   renderPiecePanelAI();
   renderPlaceBoard(isPlayer);
 
@@ -430,6 +495,7 @@ function renderPlaceBoard(interactive) {
 
 function placePlayerPiece(row, col) {
   if (G.selectedPieceIndex === null) return;
+  clearInterval(G.placeTimerInterval);
   var type = G.playerPieces[G.selectedPieceIndex];
   G.board[row][col] = mkP(type, G.playerColor);
   playSound("place");
@@ -481,6 +547,7 @@ function advancePlacingTurn() {
 // ─── PLAY PHASE ────────────────────────────────────────────────────────────
 
 function startPlay() {
+  clearInterval(G.placeTimerInterval);
   G.phase = "play";
   G.turn = "white";
   G.enPassantTarget = null;
@@ -827,6 +894,7 @@ function newGame() {
     playerCoins: 50, playerPurchases: [], buySecondsLeft: 60, buyTimerInterval: null,
     playerPieces: [], aiPieces: [], placingColor: null, placingIndex: 0,
     selectedPieceIndex: null, placedPieceIndices: [],
+    placeSecondsLeft: 10, placeTimerInterval: null,
     board: null, turn: "white", enPassantTarget: null,
     selectedSquare: null, legalMovesCache: [], promotionPending: null,
     gameOver: false, aiThinking: false,
