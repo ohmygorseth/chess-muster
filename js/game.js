@@ -192,14 +192,31 @@ function boardCols() {
 }
 
 function updateCoords() {
-  var sideEls = document.querySelectorAll(".coord-side");
   var rows = boardRows();
-  sideEls.forEach(function(el, i) { if (rows[i] !== undefined) el.textContent = 8 - rows[i]; });
-
-  var fileEls = document.querySelectorAll(".coord");
   var cols = boardCols();
   var files = ["a","b","c","d","e","f","g","h"];
-  fileEls.forEach(function(el, i) { if (cols[i] !== undefined) el.textContent = files[cols[i]]; });
+
+  // Determine which screen is active
+  var playVisible = document.getElementById("playScreen").style.display !== "none";
+  var sideId = playVisible ? "playCoordsSide" : "placeCoordsSide";
+  var bottomId = playVisible ? "playCoordsBottom" : "placeCoordsBottom";
+
+  var sideEl = document.getElementById(sideId);
+  var bottomEl = document.getElementById(bottomId);
+
+  if (sideEl) {
+    var sideEls = sideEl.querySelectorAll(".coord-side");
+    sideEls.forEach(function(el, i) {
+      if (rows[i] !== undefined) el.textContent = 8 - rows[i];
+    });
+  }
+
+  if (bottomEl) {
+    var fileEls = bottomEl.querySelectorAll(".coord");
+    fileEls.forEach(function(el, i) {
+      if (cols[i] !== undefined) el.textContent = files[cols[i]];
+    });
+  }
 }
 
 // ─── BUY PHASE ─────────────────────────────────────────────────────────────
