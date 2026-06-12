@@ -468,7 +468,6 @@ header span {
 /* ─── Board ───────────────────────────────────────────────── */
 .board-wrap {
   position: relative;
-  padding-left: clamp(18px, 2vw, 28px);
 }
 
 .board {
@@ -506,34 +505,33 @@ header span {
 .square.valid-place  { background-color: var(--valid-place) !important; cursor: pointer; }
 .square.valid-place:hover { filter: brightness(1.12); }
 
-.board-coords {
-  display: grid; grid-template-columns: repeat(8, 1fr); width: var(--board-size);
-}
-
-.coord {
-  text-align: center;
-  font-size: clamp(0.45rem, 0.6vw, 0.8rem);
-  color: var(--muted); padding: 2px 0;
-}
-
-.board-coords-side {
+/* ─── Inline board coordinates ────────────────────────────── */
+.sq-rank {
   position: absolute;
-  left: clamp(-22px, -2vw, -14px);
-  top: 0;
-  height: var(--board-size);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
+  top: 3px;
+  left: 3px;
+  font-size: clamp(0.45rem, 0.7vw, 0.85rem);
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
 }
 
-#placeScreen .board-coords-side {
-  height: var(--board-size-full);
+.sq-file {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  font-size: clamp(0.45rem, 0.7vw, 0.85rem);
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
 }
 
-.coord-side {
-  font-size: clamp(0.45rem, 0.6vw, 0.8rem);
-  color: var(--muted);
-}
+.square.light .sq-rank,
+.square.light .sq-file { color: var(--dark-sq); }
+.square.dark .sq-rank,
+.square.dark .sq-file  { color: var(--light-sq); }
 
 /* ─── Outside-board imgs ──────────────────────────────────── */
 .shop-piece img, .purchase-list img, .king-row img {
