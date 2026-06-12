@@ -200,9 +200,10 @@ function minimax(board, depth, alpha, beta, maximizing, enPassantTarget) {
   }
 }
 
-// Entry point: get the best move for the AI (black)
-// depth 3 is reasonable for this kind of game
-function aiBestMove(board, enPassantTarget) {
-  var result = minimax(board, 3, -Infinity, Infinity, true, enPassantTarget);
+// Entry point: get the best move for the AI
+// maximizing = true means playing for black (positive score = good for black)
+function aiBestMove(board, enPassantTarget, aiColor) {
+  var maximizing = aiColor === "black";
+  var result = minimax(board, 3, -Infinity, Infinity, maximizing, enPassantTarget);
   return result.move;
 }

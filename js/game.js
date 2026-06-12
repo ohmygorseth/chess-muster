@@ -682,7 +682,7 @@ function doAIMove() {
     return;
   }
 
-  var move = aiBestMove(G.board, G.enPassantTarget);
+  var move = aiBestMove(G.board, G.enPassantTarget, G.aiColor);
   if (!move) { G.aiThinking = false; updatePlayUI(); return; }
 
   var piece = G.board[move.from.row][move.from.col];
