@@ -454,6 +454,9 @@ function renderPlaceBoard(interactive) {
   var validRows = G.placingColor === "white" ? [6, 7] : [0, 1];
   var rows = boardRows();
   var cols = boardCols();
+  var files = ["a","b","c","d","e","f","g","h"];
+  var lastRow = rows[rows.length - 1];
+  var firstCol = cols[0];
 
   rows.forEach(function(r) {
     cols.forEach(function(c) {
@@ -463,20 +466,31 @@ function renderPlaceBoard(interactive) {
       var p = G.board[r][c];
       if (p) sq.innerHTML = pieceSVG(p);
 
+      if (c === firstCol) {
+        var rank = document.createElement("span");
+        rank.className = "sq-rank";
+        rank.textContent = 8 - r;
+        sq.appendChild(rank);
+      }
+
+      if (r === lastRow) {
+        var file = document.createElement("span");
+        file.className = "sq-file";
+        file.textContent = files[c];
+        sq.appendChild(file);
+      }
+
       if (interactive) {
         var isValid = validRows.indexOf(r) !== -1 && !p;
-
         if (isValid) {
           sq.addEventListener("dragover", function(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             sq.classList.add("drop-target");
           });
-
           sq.addEventListener("dragleave", function() {
             sq.classList.remove("drop-target");
           });
-
           sq.addEventListener("drop", function(e) {
             e.preventDefault();
             sq.classList.remove("drop-target");
@@ -489,8 +503,6 @@ function renderPlaceBoard(interactive) {
       el.appendChild(sq);
     });
   });
-
-  updateCoords();
 }
 
 function placePlayerPiece(row, col) {
@@ -639,6 +651,9 @@ function renderPlayBoard() {
 
   var rows = boardRows();
   var cols = boardCols();
+  var files = ["a","b","c","d","e","f","g","h"];
+  var lastRow = rows[rows.length - 1];
+  var firstCol = cols[0];
 
   rows.forEach(function(r) {
     cols.forEach(function(c) {
@@ -647,6 +662,22 @@ function renderPlayBoard() {
 
       var p = board[r][c];
       if (p) sq.innerHTML = pieceSVG(p);
+
+      // Rank number on left edge (first column)
+      if (c === firstCol) {
+        var rank = document.createElement("span");
+        rank.className = "sq-rank";
+        rank.textContent = 8 - r;
+        sq.appendChild(rank);
+      }
+
+      // File letter on bottom edge (last row)
+      if (r === lastRow) {
+        var file = document.createElement("span");
+        file.className = "sq-file";
+        file.textContent = files[c];
+        sq.appendChild(file);
+      }
 
       if (lastMoveSquares.indexOf(r * 8 + c) !== -1) sq.classList.add("last-move");
       if (G.selectedSquare && G.selectedSquare.row === r && G.selectedSquare.col === c) sq.classList.add("selected");
@@ -663,7 +694,6 @@ function renderPlayBoard() {
     });
   });
 
-  updateCoords();
   renderCaptured();
 }
 
