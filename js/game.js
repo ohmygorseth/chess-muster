@@ -758,6 +758,31 @@ function showPromotionPicker(moves) {
   });
 }
 
+// Serialize board position for repetition detection
+function serializePosition(board, turn, enPassantTarget) {
+  var s = turn + "|";
+  if (enPassantTarget) s += enPassantTarget.row + "," + enPassantTarget.col;
+  s += "|";
+  for (var r = 0; r < 8; r++) {
+    for (var c = 0; c < 8; c++) {
+      var p = board[r][c];
+      s += p ? p.color[0] + p.type : ".";
+    }
+  }
+  return s;
+}
+
+function isThreefoldRepetition() {
+  var current = serializePosition(G.board, G.turn, G.enPassantTarget);
+  var count = 0;
+  for (var i = 0; i < G.history.length; i++) {
+    var h = G.history[i];
+    var pos = serializePosition(h.board, i === 0 ? "white" : (h.color === "white" ? "black" : "white"), h.enPassantTarget);
+    if (pos === current) count++;
+  }
+  return count >= 3;
+}
+
 function executeMove(move) {
   var piece = G.board[move.from.row][move.from.col];
   var isCapture = !!G.board[move.to.row][move.to.col] || !!move.enPassant;
@@ -766,7 +791,6 @@ function executeMove(move) {
   G.board = applyMove(G.board, move);
   G.enPassantTarget = move.doublePush ? getEnPassantTarget(move, piece) : null;
 
-  // Save to history
   G.history.push({
     board: cloneBoard(G.board),
     enPassantTarget: G.enPassantTarget,
@@ -781,6 +805,16 @@ function executeMove(move) {
   G.turn = G.turn === "white" ? "black" : "white";
 
   playSound(isCapture ? "capture" : "move");
+
+  // Check threefold repetition
+  if (isThreefoldRepetition()) {
+    G.gameOver = true;
+    document.getElementById("playStatus").textContent = "Draw — threefold repetition!";
+    renderPlayBoard();
+    renderMoveList();
+    return;
+  }
+
   updatePlayUI();
 
   if (!G.gameOver && G.turn === G.aiColor) {
@@ -820,6 +854,16 @@ function doAIMove() {
   G.aiThinking = false;
 
   playSound(isCapture ? "capture" : "move");
+
+  // Check threefold repetition
+  if (isThreefoldRepetition()) {
+    G.gameOver = true;
+    document.getElementById("playStatus").textContent = "Draw — threefold repetition!";
+    renderPlayBoard();
+    renderMoveList();
+    return;
+  }
+
   updatePlayUI();
 }
 
