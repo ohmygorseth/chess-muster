@@ -1,73 +1,74 @@
-// chess.js — move generation and rule enforcement for Chess Draft
-// No castling. En passant OK. Pawn promotion OK.
-// Double-step allowed only on pawn's first move from placed square.
+// chess.js — complete chess rule enforcement for Chess Muster
+// No castling. En passant OK. Promotion OK.
+// Double-step only on pawn's first move from placed square.
 
-// Returns all pseudo-legal moves for a piece at (row, col)
-// enPassantTarget: {row, col} or null — the square a pawn can capture en passant
+// ─── Pseudo-legal move generation ─────────────────────────────────────────
+
 function pseudoMoves(board, row, col, enPassantTarget) {
   var p = board[row][col];
   if (!p) return [];
   var moves = [];
   var t = p.type;
   var color = p.color;
-  var dir = color === "white" ? -1 : 1; // white moves up (decreasing row), black down
+  var dir = color === "white" ? -1 : 1;
 
   if (t === "P") {
-    // Single step forward
     var nr = row + dir;
+
+    // Single step
     if (nr >= 0 && nr < 8 && !board[nr][col]) {
-      moves.push({ from: { row: row, col: col }, to: { row: nr, col: col }, promotion: false });
+      moves.push({ from: {row:row,col:col}, to: {row:nr,col:col}, doublePush:false, enPassant:false });
 
       // Double step — only if pawn has never moved
       if (!p.hasMoved) {
         var nr2 = row + dir * 2;
         if (nr2 >= 0 && nr2 < 8 && !board[nr2][col]) {
-          moves.push({ from: { row: row, col: col }, to: { row: nr2, col: col }, promotion: false, doublePush: true });
+          moves.push({ from: {row:row,col:col}, to: {row:nr2,col:col}, doublePush:true, enPassant:false });
         }
       }
     }
 
-    // Captures (diagonal)
-    [-1, 1].forEach(function(dc) {
-      var nc = col + dc;
-      if (nc >= 0 && nc < 8) {
-        var target = board[nr] && board[nr][nc];
-        if (target && target.color !== color) {
-          moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc }, promotion: false });
+    // Diagonal captures
+    if (nr >= 0 && nr < 8) {
+      [-1, 1].forEach(function(dc) {
+        var nc = col + dc;
+        if (nc >= 0 && nc < 8) {
+          var target = board[nr][nc];
+          if (target && target.color !== color) {
+            moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc}, doublePush:false, enPassant:false });
+          }
+          // En passant
+          if (enPassantTarget && nr === enPassantTarget.row && nc === enPassantTarget.col) {
+            moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc}, doublePush:false, enPassant:true });
+          }
         }
-        // En passant
-        if (enPassantTarget && nr === enPassantTarget.row && nc === enPassantTarget.col) {
-          moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc }, enPassant: true, promotion: false });
-        }
-      }
-    });
+      });
+    }
 
   } else if (t === "N") {
-    var knightMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-    knightMoves.forEach(function(d) {
+    [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(function(d) {
       var nr = row + d[0], nc = col + d[1];
       if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
         var target = board[nr][nc];
         if (!target || target.color !== color) {
-          moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc } });
+          moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc} });
         }
       }
     });
 
   } else if (t === "K") {
-    var kingMoves = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-    kingMoves.forEach(function(d) {
+    [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(function(d) {
       var nr = row + d[0], nc = col + d[1];
       if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
         var target = board[nr][nc];
         if (!target || target.color !== color) {
-          moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc } });
+          moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc} });
         }
       }
     });
 
   } else {
-    // Sliding pieces: Q, R, B
+    // Sliding: Q, R, B
     var dirs = [];
     if (t === "R" || t === "Q") dirs = dirs.concat([[-1,0],[1,0],[0,-1],[0,1]]);
     if (t === "B" || t === "Q") dirs = dirs.concat([[-1,-1],[-1,1],[1,-1],[1,1]]);
@@ -78,13 +79,12 @@ function pseudoMoves(board, row, col, enPassantTarget) {
         var target = board[nr][nc];
         if (target) {
           if (target.color !== color) {
-            moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc } });
+            moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc} });
           }
           break;
         }
-        moves.push({ from: { row: row, col: col }, to: { row: nr, col: nc } });
-        nr += d[0];
-        nc += d[1];
+        moves.push({ from: {row:row,col:col}, to: {row:nr,col:nc} });
+        nr += d[0]; nc += d[1];
       }
     });
   }
@@ -92,17 +92,16 @@ function pseudoMoves(board, row, col, enPassantTarget) {
   return moves;
 }
 
-// Apply a move to a board (returns new board, does not mutate)
-// move: { from, to, enPassant, doublePush, promoteTo }
+// ─── Apply move ────────────────────────────────────────────────────────────
+
 function applyMove(board, move) {
   var b = cloneBoard(board);
   var p = b[move.from.row][move.from.col];
   var piece = { type: p.type, color: p.color, hasMoved: true };
 
-  // En passant capture
+  // En passant: remove captured pawn
   if (move.enPassant) {
-    var captureRow = move.from.row; // the captured pawn is on the same row as the moving pawn
-    b[captureRow][move.to.col] = null;
+    b[move.from.row][move.to.col] = null;
   }
 
   // Promotion
@@ -112,61 +111,65 @@ function applyMove(board, move) {
 
   b[move.to.row][move.to.col] = piece;
   b[move.from.row][move.from.col] = null;
-
   return b;
 }
 
-// Is the given color's king in check on this board?
-function inCheck(board, color, enPassantTarget) {
-  var king = findKing(board, color);
-  if (!king) return false;
-  var opponent = color === "white" ? "black" : "white";
+// ─── Check detection ───────────────────────────────────────────────────────
 
+function isSquareAttacked(board, row, col, byColor) {
   for (var r = 0; r < 8; r++) {
     for (var c = 0; c < 8; c++) {
-      if (board[r][c] && board[r][c].color === opponent) {
-        var moves = pseudoMoves(board, r, c, enPassantTarget);
-        for (var i = 0; i < moves.length; i++) {
-          if (moves[i].to.row === king.row && moves[i].to.col === king.col) {
-            return true;
-          }
-        }
+      var p = board[r][c];
+      if (!p || p.color !== byColor) continue;
+      var moves = pseudoMoves(board, r, c, null);
+      for (var i = 0; i < moves.length; i++) {
+        if (moves[i].to.row === row && moves[i].to.col === col) return true;
       }
     }
   }
   return false;
 }
 
-// Get all legal moves for a color (filters out moves that leave own king in check)
+function inCheck(board, color, enPassantTarget) {
+  var king = findKing(board, color);
+  if (!king) return true; // King missing = in check (illegal state)
+  var opponent = color === "white" ? "black" : "white";
+  return isSquareAttacked(board, king.row, king.col, opponent);
+}
+
+// ─── Legal moves ───────────────────────────────────────────────────────────
+
 function legalMoves(board, color, enPassantTarget) {
   var moves = [];
+  var opponent = color === "white" ? "black" : "white";
+  var promotionRow = color === "white" ? 0 : 7;
+
   for (var r = 0; r < 8; r++) {
     for (var c = 0; c < 8; c++) {
-      if (board[r][c] && board[r][c].color === color) {
-        var pm = pseudoMoves(board, r, c, enPassantTarget);
-        pm.forEach(function(move) {
-          // Expand promotions
-          var promotionRow = color === "white" ? 0 : 7;
-          if (board[r][c].type === "P" && move.to.row === promotionRow) {
-            ["Q", "R", "B", "N"].forEach(function(pt) {
-              var pm2 = Object.assign({}, move, { promoteTo: pt, promotion: true });
-              var nb = applyMove(board, pm2);
-              if (!inCheck(nb, color, null)) moves.push(pm2);
-            });
-          } else {
-            var nb = applyMove(board, move);
-            if (!inCheck(nb, color, move.doublePush ? null : enPassantTarget)) {
-              moves.push(move);
-            }
-          }
-        });
-      }
+      var p = board[r][c];
+      if (!p || p.color !== color) continue;
+
+      var pm = pseudoMoves(board, r, c, enPassantTarget);
+
+      pm.forEach(function(move) {
+        // Expand promotions
+        if (p.type === "P" && move.to.row === promotionRow) {
+          ["Q", "R", "B", "N"].forEach(function(pt) {
+            var m2 = Object.assign({}, move, { promoteTo: pt, promotion: true });
+            var nb = applyMove(board, m2);
+            if (!inCheck(nb, color, null)) moves.push(m2);
+          });
+        } else {
+          var nb = applyMove(board, move);
+          var nextEP = move.doublePush ? getEnPassantTarget(move, p) : null;
+          if (!inCheck(nb, color, nextEP)) moves.push(move);
+        }
+      });
     }
   }
   return moves;
 }
 
-// Get legal moves for a specific piece at (row, col)
 function legalMovesForPiece(board, row, col, enPassantTarget) {
   var p = board[row][col];
   if (!p) return [];
@@ -174,22 +177,25 @@ function legalMovesForPiece(board, row, col, enPassantTarget) {
   return all.filter(function(m) { return m.from.row === row && m.from.col === col; });
 }
 
-// Check game state for the side whose turn it is
-// Returns: "normal", "check", "checkmate", "stalemate"
+// ─── Game state ────────────────────────────────────────────────────────────
+
 function gameState(board, color, enPassantTarget) {
+  // King missing = immediate loss
+  var king = findKing(board, color);
+  if (!king) return "checkmate";
+
   var moves = legalMoves(board, color, enPassantTarget);
   var checked = inCheck(board, color, enPassantTarget);
-  if (moves.length === 0) {
-    return checked ? "checkmate" : "stalemate";
-  }
+
+  if (moves.length === 0) return checked ? "checkmate" : "stalemate";
   return checked ? "check" : "normal";
 }
 
-// Compute the en passant target square after a double pawn push
-// Returns {row, col} of the square behind the pawn, or null
+// ─── En passant target ─────────────────────────────────────────────────────
+
 function getEnPassantTarget(move, piece) {
   if (piece.type === "P" && move.doublePush) {
-    var dir = piece.color === "white" ? 1 : -1; // square behind = opposite of move direction
+    var dir = piece.color === "white" ? 1 : -1;
     return { row: move.to.row + dir, col: move.to.col };
   }
   return null;
