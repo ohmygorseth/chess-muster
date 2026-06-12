@@ -464,7 +464,10 @@ header span {
 .resign-btn:hover { border-color: #e53935; color: #e53935; }
 
 /* ─── Board ───────────────────────────────────────────────── */
-.board-wrap { position: relative; }
+.board-wrap {
+  position: relative;
+  padding-left: clamp(18px, 2vw, 28px);
+}
 
 .board {
   display: grid; grid-template-columns: repeat(8, 1fr);
@@ -512,8 +515,17 @@ header span {
 }
 
 .board-coords-side {
-  position: absolute; left: clamp(-16px, -1.5vw, -12px); top: 0;
-  height: var(--board-size); display: flex; flex-direction: column; justify-content: space-around;
+  position: absolute;
+  left: clamp(-22px, -2vw, -14px);
+  top: 0;
+  height: var(--board-size);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+#placeScreen .board-coords-side {
+  height: var(--board-size-full);
 }
 
 .coord-side {
