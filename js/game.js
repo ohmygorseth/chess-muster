@@ -579,7 +579,13 @@ function startPlay() {
   showScreen("playScreen");
   updatePlayUI();
 
-  // Only AI moves first if AI is white (white always goes first in chess)
+  // Check if game is already over at start (e.g. checkmate/stalemate from placement)
+  var initialState = gameState(G.board, G.turn, G.enPassantTarget);
+  if (initialState === "checkmate" || initialState === "stalemate") {
+    return; // updatePlayUI already handled it
+  }
+
+  // Only AI moves first if AI is white
   if (G.aiColor === "white") {
     G.aiThinking = true;
     setTimeout(doAIMove, 800);
